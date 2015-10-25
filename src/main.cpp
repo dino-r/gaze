@@ -92,6 +92,9 @@ void close () {
 }
 
 
+constexpr int round(float x) {
+   return floor(x + 0.5f);
+}
 
 SDL_Rect center_fit (int im_w, int im_h, int screen_w, int screen_h ) {
    float width_growth  = float (screen_w) / float(im_w);
@@ -99,14 +102,14 @@ SDL_Rect center_fit (int im_w, int im_h, int screen_w, int screen_h ) {
    
    int x, y, w, h;
    if (width_growth < height_growth) {
-      w = floor(width_growth * im_w + 0.5);
-      h = floor(width_growth * im_h + 0.5);
+      w = round(width_growth * im_w );
+      h = round(width_growth * im_h );
       x = 0;
       y = (screen_h - h)/2;
       
    } else {
-      w = floor(height_growth * im_w + 0.5);
-      h = floor(height_growth * im_h + 0.5);
+      w = round(height_growth * im_w );
+      h = round(height_growth * im_h );
       x = (screen_w - w)/2; 
       y =  0;
    }
@@ -120,9 +123,6 @@ void update_position (SDL_Point rel_motion, SDL_Rect* rect) {
 }
 
 constexpr float ZOOM_FACTOR = 1.1f;
-constexpr int round(float x) {
-   return floor(x + 0.5f);
-}
 
 SDL_Point rect_coordinates(SDL_Point p, SDL_Rect rect) {
    return {p.x - rect.x, p.y - rect.y};
