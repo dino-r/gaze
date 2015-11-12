@@ -6,7 +6,7 @@ Dependencies:
    - SDL2\_image 
    - and SDL2\_ttf
 
-List images you want to look at as command line arguments. 
+List images you want to look at as command line arguments.
 
    - Use j and k to go to the next and previous image, respectively. 
    - Use mouse wheel to zoom. 
@@ -15,6 +15,9 @@ List images you want to look at as command line arguments.
 
 TODO
 ----
-   - some code organization
+   - some code organization!
    - Window resizing
    - Exceptions
+   - Show path of the displayed imaged
+   - Rotate image
+   - Mouse wheel for other platforms than Linux
