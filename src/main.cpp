@@ -11,6 +11,12 @@
 #include "image.h"
 #include "input.h"
 
+#ifdef __APPLE__
+   #define FONT_PATH "/Library/Fonts/Andale Mono.ttf"
+#elif defined __linux__
+   #define FONT_PATH "/usr/share/fonts/TTF/DejaVuSansMono.ttf"
+#endif
+
 
 const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 500;
@@ -69,7 +75,7 @@ bool init (){
 bool loadMedia() {
    bool success = true;
 
-   gFont = TTF_OpenFont( "/usr/share/fonts/TTF/DejaVuSansMono.ttf", 15);
+   gFont = TTF_OpenFont( FONT_PATH, 15);
    if( gFont == nullptr ) {
       printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError());
       success = false;
@@ -92,7 +98,7 @@ void close () {
 }
 
 
-constexpr int round(float x) {
+int round(float x) {
    return floor(x + 0.5f);
 }
 
