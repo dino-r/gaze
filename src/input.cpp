@@ -1,5 +1,5 @@
 #include "SDL2/SDL.h"
-#include "input.h"
+#include "input.hpp"
 
 Input::Input () {
    mousePos_ = {0,0};

@@ -10,12 +10,12 @@ class Image {
       Image();
 
       //Destructor
-      ~Image();
+      ~Image() noexcept;
 
       void free();
 
       bool loadFromFile(SDL_Renderer* renderer);
-      void render( SDL_Renderer* renderer, int x, int y, SDL_Rect* clip = nullptr, SDL_Rect* dstrect = nullptr, 
+      void render( SDL_Renderer* renderer,  SDL_Rect* clip = nullptr, SDL_Rect* dstrect = nullptr, 
                    double angle = 0.0, SDL_Point* center = nullptr, SDL_RendererFlip flip = SDL_FLIP_NONE );
       int getWidth();
       int getHeight();

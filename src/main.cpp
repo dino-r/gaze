@@ -1,6 +1,6 @@
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
-#include "SDL2/SDL_ttf.h"
+#include "SDL.hpp"
+//#include "SDL2/SDL_image.h"
+//#include "SDL2/SDL_ttf.h"
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -8,8 +8,8 @@
 #include <tuple>
 #include <algorithm>
 
-#include "image.h"
-#include "input.h"
+#include "image.hpp"
+#include "input.hpp"
 
 #ifdef __APPLE__
    #define FONT_PATH "/Library/Fonts/Andale Mono.ttf"
@@ -18,84 +18,9 @@
 #endif
 
 
-const int SCREEN_WIDTH = 1000;
-const int SCREEN_HEIGHT = 500;
 
-SDL_Window* gWindow     = nullptr;
-SDL_Renderer* gRenderer = nullptr;
-TTF_Font *gFont = nullptr;
 Image gImage;
 Input uInput;
-
-
-
-bool init (){
-   bool success = true;
-
-   if (SDL_Init(SDL_INIT_VIDEO) < 0){
-      printf("SDL could not be initialized! SDL Error: %s\n", SDL_GetError());
-      success = false;
-   } 
-   else {
-      gWindow = SDL_CreateWindow ( "gaze", SDL_WINDOWPOS_UNDEFINED, 
-                                    SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, 
-                                    SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-      if (gWindow == nullptr) {
-         printf( "Window could not be created! SDL Error: %s\n", SDL_GetError());
-         success = false;
-      } 
-      else {
-         gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-         if(gRenderer == nullptr){
-            printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
-            success = false;
-         } 
-         else {
-            SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-
-            int imgFlags = IMG_INIT_PNG | IMG_INIT_JPG | IMG_INIT_TIF;
-            if ( !( IMG_Init( imgFlags ) & imgFlags ) ) {
-               printf( "SDL_image could not inititalize! SDL_Image Error: %s\n", IMG_GetError() );
-               success = false;
-            }
-
-            if (TTF_Init() == -1) {
-               printf ("SDL_ttf could not be initialized! SDL_ttf Error: %s\n", TTF_GetError() );
-               success = false;
-            }
-
-
-         }
-      }
-   }
-   return success;
-}
-
-
-bool loadMedia() {
-   bool success = true;
-
-   gFont = TTF_OpenFont( FONT_PATH, 15);
-   if( gFont == nullptr ) {
-      printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError());
-      success = false;
-   } 
-   return success;
-}
-
-void close () {
-   TTF_CloseFont( gFont );
-   gFont= nullptr;
-
-   SDL_DestroyRenderer( gRenderer );
-   SDL_DestroyWindow( gWindow );
-   gWindow = nullptr;
-   gRenderer = nullptr;
-
-   TTF_Quit();
-   IMG_Quit();
-   SDL_Quit();
-}
 
 
 int round(float x) {
@@ -134,7 +59,7 @@ SDL_Point rect_coordinates(SDL_Point p, SDL_Rect rect) {
    return {p.x - rect.x, p.y - rect.y};
 }
 
-void update_zoom (int wheel, SDL_Point mousePos, int screen_w, int screen_h, SDL_Rect* rect) {
+void update_zoom (int wheel, SDL_Point mousePos, SDL_Rect* rect) {
    //TODO: for an OS with an actual scroll wheel (not the hacked linux stuff), 
    //the zoom should scale with the integer that we have in the wheel.
    //But I don't know how strong it should be...
@@ -170,69 +95,71 @@ std::vector<std::string> argparse(int argc, char* args[]) {
 
 int main( int argc, char* args[] ) {
    auto arguments = argparse(argc, args);
-   if (!init()) {
-      printf( "Failed to initialize!\n" );
-   } else {
-      if( !loadMedia() ) {
-         printf( "Failed to load media!\n" );
+   try { 
+      SDL::SDL sdl;
+      SDL::Window win;
+      SDL::Renderer rend ( win );
+      SDL::TTF font ( FONT_PATH );
+      SDL::Image img;
+
+
+      gImage.insertPaths(arguments);
+      if ( !gImage.loadFromFile(rend.renderer))  {
+         printf("Failed to load image...");
       } else {
-         gImage.insertPaths(arguments);
-         if ( !gImage.loadFromFile(gRenderer) ) {
-            printf("Failed to load image...");
-         } else {
 
-            SDL_Rect srcrect, dstrect;
-            SDL_Event e;
-            SDL_Point mouse_image_coords;
+         SDL_Rect srcrect, dstrect;
+         SDL_Event e;
+         SDL_Point mouse_image_coords;
 
-            //default src and dst rectangles of images. No clipping and fitting everything on the window
-            srcrect = {0,0, gImage.getWidth(), gImage.getHeight()};
-            dstrect = center_fit( gImage.getWidth(), gImage.getHeight(), SCREEN_WIDTH, SCREEN_HEIGHT );
+         //default src and dst rectangles of images. No clipping and fitting everything on the window
+         srcrect = {0,0, gImage.getWidth(), gImage.getHeight()};
+         dstrect = center_fit( gImage.getWidth(), gImage.getHeight(), SCREEN_WIDTH, SCREEN_HEIGHT );
 
-            while( !uInput.quit() ) {
-               while( SDL_PollEvent( &e ) != 0 ) {
-                  uInput.handleEvent(&e);
-                  
-                  if (uInput.next()) {
-                     gImage.next();
-                     if ( !gImage.loadFromFile(gRenderer) ) {
-                        printf("Failed to load image...");
-                     } else {
-                        srcrect = {0,0, gImage.getWidth(), gImage.getHeight()};
-                        dstrect = center_fit( gImage.getWidth(), gImage.getHeight(), SCREEN_WIDTH, SCREEN_HEIGHT );
-                     }
-                  }
-                  if (uInput.previous()) {
-                     gImage.previous();
-                     if ( !gImage.loadFromFile(gRenderer) ) {
-                        printf("Failed to load image...");
-                     } else {
-                        srcrect = {0,0, gImage.getWidth(), gImage.getHeight()};
-                        dstrect = center_fit( gImage.getWidth(), gImage.getHeight(), SCREEN_WIDTH, SCREEN_HEIGHT );
-                     }
-                  }
-
-                  SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );
-                  SDL_RenderClear( gRenderer );
-
-                  //click and drag around
-                  if (uInput.mouseIsDown()) {
-                     update_position( uInput.getRelativeMotion(), &dstrect );
-                  }
-
+         while( !uInput.quit() ) {
+            while( SDL_PollEvent( &e ) != 0 ) {
+               uInput.handleEvent(&e);
                
-
-                  mouse_image_coords = rect_coordinates(uInput.getMousePosition(), dstrect);
-                  update_zoom(uInput.getWheel(), mouse_image_coords, SCREEN_WIDTH, SCREEN_HEIGHT, &dstrect);
-
-                  gImage.render(gRenderer, 0, 0, &srcrect, &dstrect);
-                  SDL_RenderPresent( gRenderer );
+               if (uInput.next()) {
+                  gImage.next();
+                  if ( !gImage.loadFromFile(rend.renderer) ) {
+                     printf("Failed to load image...");
+                  } else {
+                     srcrect = {0,0, gImage.getWidth(), gImage.getHeight()};
+                     dstrect = center_fit( gImage.getWidth(), gImage.getHeight(), SCREEN_WIDTH, SCREEN_HEIGHT );
+                  }
                }
+               if (uInput.previous()) {
+                  gImage.previous();
+                  if ( !gImage.loadFromFile(rend.renderer) ) {
+                     printf("Failed to load image...");
+                  } else {
+                     srcrect = {0,0, gImage.getWidth(), gImage.getHeight()};
+                     dstrect = center_fit( gImage.getWidth(), gImage.getHeight(), SCREEN_WIDTH, SCREEN_HEIGHT );
+                  }
+               }
+
+               SDL_SetRenderDrawColor( rend.renderer, 0x00, 0x00, 0x00, 0xFF );
+               SDL_RenderClear( rend.renderer);
+
+               //click and drag around
+               if (uInput.mouseIsDown()) {
+                  update_position( uInput.getRelativeMotion(), &dstrect );
+               }
+
+            
+
+               mouse_image_coords = rect_coordinates(uInput.getMousePosition(), dstrect);
+               update_zoom(uInput.getWheel(), mouse_image_coords, &dstrect);
+
+               gImage.render(rend.renderer, &srcrect, &dstrect);
+               SDL_RenderPresent( rend.renderer);
             }
          }
       }
+   } catch (std::string str) {
+      std::cout << str << "\n";
    }
-   close();
    return 0;
 }
 

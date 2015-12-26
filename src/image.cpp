@@ -1,8 +1,7 @@
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
+#include "SDL.hpp"
 #include <string>
 
-#include "image.h"
+#include "image.hpp"
 
 
 Image::Image() {
@@ -51,7 +50,7 @@ bool Image::loadFromFile(SDL_Renderer* renderer) {
    return texture_ != nullptr;
 }
 
-void Image::render(SDL_Renderer* renderer, int x, int y, SDL_Rect* clip, SDL_Rect* dstrect, 
+void Image::render(SDL_Renderer* renderer, SDL_Rect* clip, SDL_Rect* dstrect, 
                    double angle, SDL_Point* center, SDL_RendererFlip flip ) {
    SDL_RenderCopyEx( renderer, texture_, clip, dstrect, angle, center, flip );
 }
@@ -69,7 +68,7 @@ void Image::insertPaths(std::vector<std::string> paths){
 }
 
 void Image::next() {
-   if (paths_.size() - 1 > id_) id_ += 1;
+   if ((int)paths_.size() - 1 >  id_) id_ += 1;
 }
 
 void Image::previous() {
